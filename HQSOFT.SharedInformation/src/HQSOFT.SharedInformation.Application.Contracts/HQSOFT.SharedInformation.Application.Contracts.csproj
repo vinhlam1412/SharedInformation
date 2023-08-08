@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net7.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<RootNamespace>HQSOFT.SharedInformation</RootNamespace>
+	<Title>HQSOFT.SharedInformation.Application.Contracts</Title>
+	<Description>HQSOFT.SharedInformation.Application.Contracts</Description>
+	<Company>HQSOFT Company Limited</Company>
+	<Copyright>© HQSOFT Company Limited</Copyright>
+	<PackageOutputPath>C:\Working\Source\eBiz ERP\Packages</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HQSOFT.eBiz.GeneralLedger.Application.Contracts" Version="0.1.0" />
+    <PackageReference Include="Volo.Abp.Ddd.Application.Contracts" Version="7.3.0" />
+    <PackageReference Include="Volo.Abp.Authorization.Abstractions" Version="7.3.0" />
+    <ProjectReference Include="..\HQSOFT.SharedInformation.Domain.Shared\HQSOFT.SharedInformation.Domain.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

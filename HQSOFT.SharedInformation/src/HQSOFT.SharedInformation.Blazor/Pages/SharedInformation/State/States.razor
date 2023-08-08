@@ -1,0 +1,161 @@
+@page "/SharedInformation/GeographicalSubdivisions/States"
+
+@attribute [Authorize(SharedInformationPermissions.States.Default)]
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using global::HQSOFT.SharedInformation.Countries
+@using global::HQSOFT.SharedInformation.States
+@using global::HQSOFT.SharedInformation.Localization
+@using global::HQSOFT.SharedInformation.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components
+@using Blazorise.Components
+@using DevExpress.Blazor
+@using DevExpress.Blazor.Grid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using global::HQSOFT.SharedInformation.Permissions
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@using Microsoft.JSInterop
+
+@inject IJSRuntime JSRuntime
+@inherits SharedInformationComponentBase
+@inject IStatesAppService StatesAppService
+@inject ICountriesAppService CountriesAppService
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@(L["States"] + (IsDataEntryChanged? " (*)":""))" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+    <p></p>
+</PageHeader>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+@* ************************* FORM HEADER ************************* *@
+<Card>
+    <CardBody>
+        <Form id="OrderSearchForm" class="mb-3">
+            <Row>
+                <Addons>
+                    <Addon AddonType="AddonType.Body">
+                        <TextEdit @bind-Text="@Filter.FilterText"
+                                  Autofocus="true"
+                                  Placeholder="@L["Search"]">
+                        </TextEdit>
+                    </Addon>
+                    <Addon AddonType="AddonType.End">
+                        <SubmitButton Form="OrderSearchForm" Clicked="GetStatesAsync">
+                            <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                        </SubmitButton>
+                    </Addon>
+                </Addons>
+            </Row>
+        </Form>
+    </CardBody>
+</Card>
+<Card>
+    <CardBody>
+        <Row>
+            <DxFormLayout CssClass="w-100">
+                <DxFormLayoutItem Caption="@(L["Country"] + " *")" ColSpanLg="6" ColSpanMd="12">
+                    <DxComboBox Data="@CountriesCollection"
+                                TextFieldName="CountryName"
+                                ValueChanged="@((CountryDto country) => SelectedCountryChanged(country))"
+                                FilteringMode="DataGridFilteringMode.Contains"
+                                DisplayFormat="{1}"
+                                EditFormat="{0} {1}"
+                                InputCssClass="focus-value"
+                                ShowValidationIcon="true">
+                        <Columns>
+                            <DxListEditorColumn FieldName="CountryCode"
+                                                Caption="@L["CountryCode"]" />
+                            <DxListEditorColumn FieldName="CountryName"
+                                                Caption="@L["CountryName"]" />
+                        </Columns>
+                    </DxComboBox>
+                </DxFormLayoutItem>
+            </DxFormLayout>
+        </Row>
+    </CardBody>
+</Card>
+<Card>
+    <CardBody>
+        <Row>
+            <DxGrid @ref="GridState"
+                    Data="@StateList"
+                    @bind-SelectedDataItems="@SelectedStates"
+                    SelectionMode="GridSelectionMode.Multiple"
+                    AllowSelectRowByClick="true"
+                    EditMode="GridEditMode.EditRow"
+                    EditNewRowPosition="GridEditNewRowPosition.Bottom"
+                    PageSize="@PageSize"
+                    PagerPosition="GridPagerPosition.Top"
+                    PageSizeSelectorVisible="true"
+                    PageSizeSelectorItems="@(new int[] { 10, 20, 100, 500 })"
+                    PageSizeSelectorAllRowsItemVisible="true"
+                    PagerSwitchToInputBoxButtonCount="@PageSize"
+                    PagerVisibleNumericButtonCount="@PageSize"
+                    PagerNavigationMode="PagerNavigationMode.InputBox"
+                    FocusedRowEnabled="true"
+                    RowDoubleClick="GridState_OnRowDoubleClick"
+                    FocusedRowChanged="GridState_OnFocusedRowChanged"
+                    CustomizeEditModel="GridState_OnCustomizeEditModel"
+                    EditModelSaving="GridState_EditModelSaving"
+                    CustomizeDataRowEditor="GridState_CustomizeDataRowEditor"
+                    EditorRenderMode="GridEditorRenderMode.Integrated"
+                    KeyboardNavigationEnabled="true" @onkeydown="GridState_OnKeyDown">
+                <Columns>
+                    <DxGridSelectionColumn Width="5px" />
+                    <DxGridDataColumn ReadOnly="true" FieldName="Idx" Width="5px" Caption="#" TextAlignment="GridTextAlignment.Center"
+                        SortIndex="0" SortOrder="GridColumnSortOrder.Ascending">
+                        <EditSettings>
+                            <DxSpinEditSettings ShowSpinButtons="false" ReadOnly="true" />
+                        </EditSettings>
+                    </DxGridDataColumn>
+                    <DxGridDataColumn Name="StateCode" FieldName="StateCode" Width="150px" Caption="@L["StateCode"]">
+                        <CellEditTemplate>
+                            @{
+                                GridStateEditContext = context.EditContext;
+                            }
+                            <CascadingValue Name="FocusOnEditStart" Value="context.DataColumn.Name == FocusedColumn">
+                                <DxTextBox @bind-Text="((StateDto)context.EditModel).StateCode" InputCssClass="focus-value" />
+                            </CascadingValue>
+                        </CellEditTemplate>
+                    </DxGridDataColumn>
+                    <DxGridDataColumn Name="StateName" FieldName="StateName" Caption="@L["StateName"]">
+                        <CellEditTemplate>
+                            <CascadingValue Name="FocusOnEditStart" Value="context.DataColumn.Name == FocusedColumn">
+                                <DxTextBox @bind-Text="((StateDto)context.EditModel).StateName" InputCssClass="focus-value" />
+                            </CascadingValue>
+                        </CellEditTemplate>
+                    </DxGridDataColumn>
+                    <DxGridDataColumn FieldName="CountryId" Width="30%" Caption="@L["CountryName"]" ReadOnly="true">
+                        <EditSettings>
+                            <DxComboBoxSettings Data="CountriesCollection" ValueFieldName="Id" TextFieldName="CountryName"
+                                                InputCssClass="focus-value">
+                            </DxComboBoxSettings>
+                        </EditSettings>
+                    </DxGridDataColumn>
+                </Columns>
+            </DxGrid>
+            <Div class="mt-1 bt-1">
+                <Button Color="Color.Primary" Clicked="BtnAdd_GridState_OnClick" Size="Size.Small" Disabled="!CanCreateState|| !CanEditState">
+                    <i class="fa-plus fa"></i>
+                </Button>
+                <Button Color="Color.Secondary" Clicked="GridState.CancelEditAsync" Size="Size.Small">
+                    <i class="fa-undo fa"></i>
+                </Button>
+                <Button Color="Color.Danger" Clicked="BtnDelete_GridState_OnClick" Size="Size.Small" Disabled="!CanDeleteState">
+                    <i class="fa-trash fa"></i>
+                </Button>
+            </Div>
+        </Row>
+    </CardBody>
+</Card>

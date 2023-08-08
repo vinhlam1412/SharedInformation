@@ -1,0 +1,25 @@
+import { eLayoutType, RoutesService } from '@abp/ng.core';
+import { APP_INITIALIZER } from '@angular/core';<% if (isModule || isMS) { %>
+import { e<%= project %>RouteNames } from '../enums/route-names';<% } %>
+
+export const <%= macro(namespace) %>_<%= macro(name) %>_ROUTE_PROVIDER = [
+  { provide: APP_INITIALIZER, useFactory: configureRoutes, deps: [RoutesService], multi: true },
+];
+
+function configureRoutes(routes: RoutesService) {
+  return () => {
+    routes.add([
+      {<%
+        if (isModule || isMS) { %>
+        path: '/<%= kebab(project) %>/<%= kebab(namePlural) %>',
+        parentName: e<%= project %>RouteNames.<%= project %>,<% }
+        else { %>
+        path: '/<%= kebab(namePlural) %>',
+        iconClass: 'fas <%= menuIcon ? 'fa-'+menuIcon : 'fa-file-alt' %>',<% } %>
+        name: '<%= resourceName %>::Menu:<%= namePlural %>',
+        layout: eLayoutType.application,
+        requiredPolicy: '<%= requiredPolicy %>',
+      },
+    ]);
+  };
+}

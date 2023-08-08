@@ -1,0 +1,31 @@
+import { CoreModule } from '@abp/ng.core';
+import { ThemeSharedModule } from '@abp/ng.theme.shared';
+import { NgModule } from '@angular/core';
+import { NgbCollapseModule, NgbDatepickerModule, NgbDropdownModule <%= navConnections.length ? ',NgbNavModule' : '' %> } from '@ng-bootstrap/ng-bootstrap';
+import { NgxValidateCoreModule } from '@ngx-validate/core';
+import { CommercialUiModule } from '@volo/abp.commercial.ng.ui';
+import { PageModule } from '@abp/ng.components/page';
+import { <%= name %>Component } from './components/<%= kebab(name) %>.component';
+import { <%= name %>RoutingModule } from './<%= kebab(name) %>-routing.module';
+
+@NgModule({
+  declarations: [<%= name %>Component],
+  imports: [
+    <%= name %>RoutingModule,
+    CoreModule,
+    ThemeSharedModule,
+    CommercialUiModule,
+    NgxValidateCoreModule,
+    NgbCollapseModule,
+    NgbDatepickerModule,
+    NgbDropdownModule,
+    <%= navConnections.length ? 'NgbNavModule,' : '' %>
+    PageModule
+  ],
+})
+export class <%= name %>Module {}<%
+if (isModule) { %>
+
+export function load<%= name %>ModuleAsChild() {
+  return Promise.resolve(<%= name %>Module);
+}<% } %>

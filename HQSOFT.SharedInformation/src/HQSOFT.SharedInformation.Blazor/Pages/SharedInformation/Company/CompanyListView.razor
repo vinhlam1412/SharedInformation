@@ -1,0 +1,207 @@
+@page "/SharedInformation/Companies"
+
+
+
+@attribute [Authorize(SharedInformationPermissions.Companies.Default)]
+@using DevExpress.Blazor
+@using HQSOFT.SharedInformation.Permissions;
+@using HQSOFT.SharedInformation.Companies;
+@using HQSOFT.SharedInformation.Countries;
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@inherits SharedInformationComponentBase
+@inject ICompaniesAppService CompaniesAppService
+@inject ICountriesAppService CountriesAppService
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Companies"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+@* ************************* SEARCH ************************* *@
+<Card>
+    <CardBody>
+        <Form id="CompanySearchForm" class="mb-3">
+            <Addons>
+                <Addon AddonType="AddonType.Body">
+                    <DxComboBox Data="@ViewMode"
+                                Value = "@SelectedViewMode" 
+                                SelectedItemChanged="@((string e) => SelectedViewModeChangedAsync(e))"
+                                InputCssClass="focus-value">
+                    </DxComboBox>
+                    <TextEdit @bind-Text="@Filter.FilterText"
+                              Autofocus="true"
+                              Margin="Margin.IsAuto"
+                              Placeholder="@L["Search"]">
+                    </TextEdit>
+                </Addon>
+                <Addon AddonType="AddonType.End">
+                    <SubmitButton Form="CompanySearchForm" Clicked="GetCompaniesAsync">
+                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                    </SubmitButton>
+                </Addon>
+            </Addons>
+        </Form>
+    </CardBody>
+</Card>
+
+@* ************************* DATA GRID ************************* *@
+<Card Display="@((SelectedViewMode != "List View")? Display.None: Display.Always)">
+    <CardBody>
+        <DataGrid TItem="CompanyDto"
+                    Data="CompanyList"
+                    ReadData="OnDataGridReadAsync"
+                    TotalItems="TotalCount"
+                    ShowPager="true"
+                    Responsive="true"
+                    PageSize="PageSize"
+        @bind-SelectedRows="SelectedCompanies"
+                    SelectionMode="Blazorise.DataGrid.DataGridSelectionMode.Multiple">
+            <DataGridColumns>
+
+                <DataGridMultiSelectColumn TItem="CompanyDto" Width="30px"></DataGridMultiSelectColumn>
+                <DataGridCommandColumn TItem="CompanyDto" />
+
+                <DataGridColumn TItem="CompanyDto"
+                                Field="CompanyName"
+                                Filterable="false"
+                                Sortable="false"
+                                Caption="#"
+                                Width="10px">
+                    <DisplayTemplate>
+                        @{
+                            @(CompanyList.ToList().IndexOf(context) + 1)
+                        }
+                    </DisplayTemplate>
+                </DataGridColumn>
+                <DataGridColumn TItem="CompanyDto"
+                                Field="CompanyName"
+                                Caption="@L["ID"]">
+                    <DisplayTemplate>
+                        @{
+                            <a class="d-block text-left" href="javascript:;" @onclick="() => GoToEditPage(context)">@((context as CompanyDto).CompanyName)</a>
+                        }
+                    </DisplayTemplate>
+                </DataGridColumn>
+
+                <DataGridColumn TItem="CompanyDto"
+                                Field="CountryId"
+                                Caption="@L["Country"]">
+                    <DisplayTemplate>
+                        @foreach (var country in CountriesCollection)
+                        {
+                        if ((context as CompanyDto).CountryId == country.Id)
+                            {
+                                @country.Description
+                            }
+                            else
+                            {
+                                <span style="display:none;"></span>
+                            }
+                        }
+                    </DisplayTemplate>
+
+                </DataGridColumn>
+
+                <DataGridColumn TItem="CompanyDto"
+                                Field="ParentCompany"
+                                Caption="@L["ParentCompany"]">
+                    <DisplayTemplate>
+                            @foreach (var company in CompaniesCollection)
+                            {
+                            if ((context as CompanyDto).ParentCompany == company.Id)
+                                {
+                                    @company.CompanyName;
+                                }
+                                else
+                                {
+                                    <span style="display:none;"></span>
+                                }
+                            }
+                    </DisplayTemplate>
+
+                </DataGridColumn>
+
+            </DataGridColumns>
+        </DataGrid>
+    </CardBody>
+</Card>
+
+
+
+@* ************************* TREE VIEW ************************* *@
+<Card Display="@((SelectedViewMode != "Tree View")? Display.None: Display.Always)">
+    <CardBody>
+        <DxTreeView @ref="@SampleTreeView" Data="@CompanyList"
+ 
+                    Target=""
+                    SelectionChanged="@SelectionChanged"
+                    AllowSelectNodes="true"
+                    CssClass="h-300"
+                    AnimationType="LayoutAnimationType.Slide">         
+            <DataMappings>
+                <DxTreeViewDataMapping Text="CompanyName"
+                                        Key="Id"
+                                        ParentKey="ParentCompany"
+                                        IconCssClass="IconCssClass" />
+
+            </DataMappings>
+
+            <NodeTextTemplate>
+                @{
+                    var dataItem = (CompanyDto)context.DataItem;
+                }
+                @if (!dataItem.IsGroup)
+                {
+ 
+                }
+                else
+                {
+                    <Icon Name="IconName.FolderOpen"></Icon>
+                }
+                @*<i class="fa-sharp fa-light fa-folder-open">@dataItem.CompanyName</i>
+
+                <div class="pl-1 tv-caption">
+                    @dataItem.Id
+                </div>*@
+                <div @oncontextmenu="((e) => OnContextMenu(e, dataItem))" @oncontextmenu:preventDefault>@context.Text</div>
+            </NodeTextTemplate>
+
+        </DxTreeView>
+
+        <DxContextMenu @ref="@ContextMenu" ItemClick="@OnItemClick">
+            <Items>
+                <DxContextMenuItem Text="Edit"></DxContextMenuItem>
+                <DxContextMenuItem Text="Add"></DxContextMenuItem>
+                <DxContextMenuItem Text="Delete"></DxContextMenuItem>
+            </Items>
+        </DxContextMenu>
+
+        <DxContextMenu @ref="@ContextMenu2" ItemClick="@OnItemClick">
+            <Items>
+                <DxContextMenuItem Text="Edit"></DxContextMenuItem>
+                <DxContextMenuItem Text="Delete"></DxContextMenuItem>
+            </Items>
+        </DxContextMenu>
+
+    </CardBody>
+</Card>
+
+
+
+

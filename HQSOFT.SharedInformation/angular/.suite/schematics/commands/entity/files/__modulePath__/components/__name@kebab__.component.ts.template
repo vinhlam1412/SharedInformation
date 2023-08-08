@@ -1,0 +1,161 @@
+import { ABP, <%= entity.ShouldExportExcel ? 'downloadBlob,' :''%> ListService, PagedResultDto, TrackByService } from '@abp/ng.core';
+import { Confirmation, ConfirmationService } from '@abp/ng.theme.shared';
+import { DateAdapter } from '@abp/ng.theme.shared/extensions';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { filter, finalize, switchMap, tap } from 'rxjs/operators';<%
+for (let e of enums) { %>
+import { <%= camel(e.name) %>Options } from '<%= relativePathFromComponentToEnum(scope, namespace, e) %>';<% } %>
+import type {
+  Get<%= namePlural %>Input,
+  <%= name %><%= navPropsSuffix %>Dto,
+} from '<%= relativePathFromComponentToModel(scope, namespace) %>';
+import { <%= name %>Service } from '<%= relativePathFromComponentToService(namespace, name) %>';
+@Component({
+  selector: '<%= selector %>',
+  changeDetection: ChangeDetectionStrategy.Default,
+  providers: [ListService, { provide: NgbDateAdapter, useClass: DateAdapter }],
+  templateUrl: './<%= kebab(name) %>.component.html',
+  styles: [],
+})
+export class <%= name %>Component implements OnInit {
+  data: PagedResultDto<<%= name %><%= navPropsSuffix %>Dto> = {
+    items: [],
+    totalCount: 0,
+  };
+
+  filters = {} as Get<%= namePlural %>Input;
+
+  form: FormGroup;
+
+  isFiltersHidden = true;
+
+  isModalBusy = false;
+
+  isModalOpen = false;
+
+    <% if(entity.ShouldExportExcel) {%>
+  isExportToExcelBusy = false;
+    <% } %>
+
+  selected?: <%= name %><%= navPropsSuffix %>Dto;<%
+
+  for (let e of enums) { %>
+
+  <%= camel(e.name) %>Options = <%= camel(e.name) %>Options;<% } %>
+
+  constructor(
+    public readonly list: ListService,
+    public readonly track: TrackByService,
+    public readonly service: <%= name %>Service,
+    private confirmation: ConfirmationService,
+    private fb: FormBuilder
+  ) {}
+
+  ngOnInit() {
+    const getData = (query: ABP.PageQueryParams) =>
+      this.service.getList({
+        ...query,
+        ...this.filters,
+        filterText: query.filter,
+      });
+
+    const setData = (list: PagedResultDto<<%= name %><%= navPropsSuffix %>Dto>) => (this.data = list);
+
+    this.list.hookToQuery(getData).subscribe(setData);
+  }
+
+  clearFilters() {
+    this.filters = {} as Get<%= namePlural %>Input;
+  }
+
+  buildForm() {
+    const {<%
+      for(let prop of props) { %>
+      <%= camel(prop.name) %>,<% }
+      for(let navProp of navProps) { %>
+      <%= camel(navProp.name) %>,<% } %>
+    } = this.selected<%= navPropsSuffix ? '?.' + camel(name) : '' %> || {};
+    <% if(navConnections.length) { %>
+     const {<%
+          for(let navProp of navConnections) { %>
+          <%= camel(navProp.name) %> = [],<% } %>
+        } = this.selected || {};
+     <% } %>
+    this.form = this.fb.group({<%
+      for(let prop of props) { %>
+      <%= camel(prop.name) %>: [<%= prop.defaultValue %>, [<%= prop.validators.join(', ') %>]],<% }
+      for(let prop of navProps) { %>
+      <%= camel(prop.name) %>: [<%= prop.defaultValue %>, [<%= prop.validators.join(', ') %>]],<% }
+      for(let prop of navConnections) { %>
+      <%= getLookupName(prop, true) %>s: [<%= prop.defaultValue %>, [<%= prop.validators.join(', ') %>]],<% } %>
+    });
+  }
+
+  hideForm() {
+    this.isModalOpen = false;
+    this.form.reset();
+  }
+
+  showForm() {
+    this.buildForm();
+    this.isModalOpen = true;
+  }
+
+  submitForm() {
+    if (this.form.invalid) return;
+
+    const request = this.selected
+      ? this.service.update(this.selected.<%= entityNamePrefix %>id, <% if(checkConcurrency){ %> { ...this.form.value,  concurrencyStamp: this.selected<%= navPropsSuffix ? '.' + camel(name) : '' %>.concurrencyStamp} <% } else { %> this.form.value <% }%>)
+      : this.service.create(this.form.value);
+
+    this.isModalBusy = true;
+
+    request
+      .pipe(
+        finalize(() => (this.isModalBusy = false)),
+        tap(() => this.hideForm()),
+      )
+      .subscribe(this.list.get);
+  }
+
+  create() {
+    this.selected = undefined;
+    this.showForm();
+  }
+
+  update(record: <%= name %><%= navPropsSuffix %>Dto) {
+    <% if(navConnections.length) { %>
+    this.service.getWithNavigationProperties(record.<%= entityNamePrefix %>id).subscribe(data => {
+      this.selected = data;
+      this.showForm();
+    });
+    <% } else { %>
+    this.selected = record;
+    this.showForm();
+    <% } %>
+  }
+
+  delete(record: <%= name %><%= navPropsSuffix %>Dto) {
+    this.confirmation.warn(
+      '<%= resourceName %>::DeleteConfirmationMessage',
+      '<%= resourceName %>::AreYouSure',
+      { messageLocalizationParams: [] }
+    ).pipe(
+      filter(status => status === Confirmation.Status.confirm),
+      switchMap(() => this.service.delete(record.<%= entityNamePrefix %>id)),
+    ).subscribe(this.list.get);
+  }
+  <% if(entity.ShouldExportExcel) {%>
+  exportToExcel() {
+    this.isExportToExcelBusy  = true;
+    this.service
+      .getDownloadToken()
+      .pipe(switchMap(({ token }) => this.service.getListAsExcelFile({ downloadToken: token,filterText:this.list.filter })),finalize(() => this.isExportToExcelBusy  = false))
+      .subscribe(result => {
+        downloadBlob(result, '<%= name %>.xlsx');
+      });
+  }
+  <% } %>
+}

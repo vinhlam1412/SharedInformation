@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>HQSOFT.SharedInformation.Blazor</Title>
+		<Description>HQSOFT.SharedInformation.Blazor</Description>
+		<Company>HQSOFT Company Limited</Company>
+		<Copyright>© HQSOFT Company Limited</Copyright>
+		<PackageOutputPath>C:\Working\Source\eBiz ERP\Packages</PackageOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DevExpress.Blazor" Version="23.1.4" />
+        <PackageReference Include="Volo.Abp.AutoMapper" Version="7.3.0" />
+        <PackageReference Include="Volo.Abp.AspNetCore.Components.Web.Theming" Version="7.3.0" />
+        <PackageReference Include="Volo.Abp.RemoteServices" Version="7.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HQSOFT.SharedInformation.Application.Contracts\HQSOFT.SharedInformation.Application.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>

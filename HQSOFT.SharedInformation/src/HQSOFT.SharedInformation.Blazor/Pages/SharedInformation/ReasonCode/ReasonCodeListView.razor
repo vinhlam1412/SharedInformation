@@ -1,0 +1,130 @@
+@page "/SharedInformation/ReasonCodes"
+
+
+
+@attribute [Authorize(SharedInformationPermissions.ReasonCodes.Default)]
+@attribute [Authorize(GeneralLedgerPermissions.Accounts.Default)]
+@using Microsoft.AspNetCore.Components.Routing
+@using global::HQSOFT.SharedInformation.ReasonCodes
+@using global::HQSOFT.SharedInformation.Localization
+@using global::HQSOFT.SharedInformation.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using global::HQSOFT.SharedInformation.Permissions
+@using global::HQSOFT.eBiz.GeneralLedger.Permissions
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@using Microsoft.JSInterop
+@using HQSOFT.eBiz.GeneralLedger.Accounts
+@using DevExpress.Blazor.ComboBox
+
+@inherits SharedInformationComponentBase
+@inject IJSRuntime JSRuntime
+@inject IReasonCodesAppService ReasonCodesAppService
+@inject IAccountsAppService AccountsAppService
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["ReasonCodes"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+@* ************************* SEARCH ************************* *@
+<Card>
+    <CardBody>
+        <Form id="ReasonCodeSearchForm" class="mb-3">
+            <Addons>
+                <Addon AddonType="AddonType.Body">
+                    <TextEdit @bind-Text="@Filter.FilterText"
+                              Autofocus="true"
+                              Placeholder="@L["Search"]">
+                    </TextEdit>
+                </Addon>
+                <Addon AddonType="AddonType.End">
+                    <SubmitButton Form="ReasonCodeSearchForm" Clicked="GetReasonCodesAsync">
+                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                    </SubmitButton>
+                </Addon>
+            </Addons>
+        </Form>
+    </CardBody>
+</Card>
+
+@* ************************* DATA GRID ************************* *@
+<Card>
+    <CardBody>
+        <DataGrid TItem="ReasonCodeDto"
+                  Data="ReasonCodeList"
+                  ReadData="OnDataGridReadAsync"
+                  TotalItems="TotalCount"
+                  ShowPager="true"
+                  Responsive="true"
+                  PageSize="PageSize"
+                  @bind-SelectedRows="SelectedReasonCodes"
+                  SelectionMode="Blazorise.DataGrid.DataGridSelectionMode.Multiple">
+            <DataGridColumns>
+                <DataGridMultiSelectColumn TItem="ReasonCodeDto" Width="30px"></DataGridMultiSelectColumn>
+                <DataGridCommandColumn TItem="ReasonCodeDto" />
+                <DataGridColumn TItem="ReasonCodeDto"
+                                Field="Code"
+                                Filterable="false"
+                                Sortable="false"
+                                Caption="#"
+                                Width="10px">
+                    <DisplayTemplate>
+                        @{
+                            @(ReasonCodeList.ToList().IndexOf(context) + 1)
+                        }
+                    </DisplayTemplate>
+                </DataGridColumn>
+               
+              <DataGridColumn TItem="ReasonCodeDto"
+                      Field="Code"
+                      Caption="@L["Code"]">
+                    <DisplayTemplate>
+                        @{
+                            <a class="d-block text-left" href="javascript:;" @onclick="() => GoToEditPage(context)">@((context as ReasonCodeDto).Code)</a>
+                        }
+                    </DisplayTemplate>
+              </DataGridColumn>
+
+              <DataGridColumn TItem="ReasonCodeDto"
+                                Field="Description"
+                      Caption="@L["Description"]"/>
+
+                <DataGridColumn TItem="ReasonCodeDto" Field="Type" Caption="@L["Type"]">
+                  <DisplayTemplate>
+                        @L[$"ReasonCodeType.{context.Type}"]
+                  </DisplayTemplate>
+              </DataGridColumn>
+
+              <DataGridColumn TItem="ReasonCodeDto" Field="AccountId" Caption="@L["Account"]">
+                  <DisplayTemplate>
+                    <Select TValue="Guid" @bind-SelectedValue="@context.AccountId" ReadOnly="true" Background="Background.Transparent">
+                        @foreach (var account in AccountsCollection)
+                        {
+                            <SelectItem TValue="Guid?" Value="@account.Id">
+                                @account.AccountName
+                            </SelectItem>
+                        }
+                    </Select>
+                  </DisplayTemplate>
+              
+              </DataGridColumn>
+
+            </DataGridColumns>
+        </DataGrid>
+    </CardBody>
+</Card>

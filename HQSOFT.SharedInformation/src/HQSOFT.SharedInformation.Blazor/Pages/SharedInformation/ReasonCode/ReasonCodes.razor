@@ -1,0 +1,136 @@
+﻿@page "/SharedInformation/ReasonCodes/{Id}"
+
+@attribute [Authorize(SharedInformationPermissions.ReasonCodes.Default)]
+@attribute [Authorize(GeneralLedgerPermissions.Accounts.Default)]
+@using HQSOFT.SharedInformation.ReasonCodes;
+@using HQSOFT.eBiz.GeneralLedger.Accounts;
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using global::HQSOFT.SharedInformation.Localization
+@using global::HQSOFT.SharedInformation.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components
+@using Blazorise.Components
+@using DevExpress.Blazor
+@using DevExpress.Blazor.Grid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using global::HQSOFT.SharedInformation.Permissions
+@using global::HQSOFT.eBiz.GeneralLedger.Permissions
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@using Microsoft.JSInterop
+
+@inject IJSRuntime JSRuntime
+@inherits SharedInformationComponentBase
+@inject IReasonCodesAppService ReasonCodesAppService
+@inject IAccountsAppService AccountsAppService
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@(EditingReasonCode.Description + (IsDataEntryChanged? " (*)":""))" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+    <p></p>
+</PageHeader>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+@* ************************* FORM HEADER ************************* *@
+
+<Card>
+    <CardBody>
+        <Row>
+            <EditForm @ref="EditFormMain"
+                      Model="@EditingReasonCode"
+                      Context="EditFormContext">
+                <DataAnnotationsValidator />
+                <DxFormLayout CssClass="w-100">
+
+                    <DxFormLayoutTabPages>
+                        <DxFormLayoutTabPage Caption="Order">
+
+                            <DxFormLayoutItem Caption="@(L["Code"] + " *")" ColSpanLg="6" ColSpanMd="12">
+                                <DxTextBox Text="@EditingReasonCode.Code"
+                                           TextExpression="@(() => EditingReasonCode.Code)"
+                                           TextChanged="@((newValue) => {
+                                                                IsDataEntryChanged = true;
+                                                                EditingReasonCode.Code = newValue;
+
+                                            })"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingReasonCode.Code)" />
+                            </DxFormLayoutItem>
+                            <DxFormLayoutItem Caption="@L["Description"]" ColSpanLg="6" ColSpanMd="12">
+                                <DxTextBox Text="@EditingReasonCode.Description"
+                                           TextExpression="@(() => EditingReasonCode.Description)"
+                                           TextChanged="@((newValue) => {
+                                                                IsDataEntryChanged = true;
+                                                                EditingReasonCode.Description = newValue;
+
+                                            })"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value">
+                                </DxTextBox>
+                                <ValidationMessage For="@(() => EditingReasonCode.Description)" />
+                            </DxFormLayoutItem>
+                            <DxFormLayoutItem Caption="@(L["Type"])" ColSpanLg="6" ColSpanMd="12">
+                                <DxComboBox Data="@ReasonCodeTypeCollection"
+                                            @bind-Value="@EditingReasonCode.Type"
+                                            TextFieldName="Status"
+                                            ValueFieldName="Value"
+                                            FilteringMode="DataGridFilteringMode.Contains"
+                                            DisplayFormat="{0}"
+                                            EditFormat="{0}"
+                                            SelectedItemChanged="@((ReasonCodeTypeList e) => IsDataEntryChanged = true)"
+                                            InputCssClass="focus-value">
+                                    <Columns>
+                                        <DxListEditorColumn FieldName="DisplayName"
+                                                            Caption="@L["Type"]" />
+                                    </Columns>
+                                </DxComboBox>
+                                <ValidationMessage For="@(() => EditingReasonCode.Type)" />
+                            </DxFormLayoutItem>
+                            <DxFormLayoutItem Caption="@(L["Account"])" ColSpanLg="6" ColSpanMd="12">
+                                <DxComboBox Data="@AccountsCollection"
+                                            @bind-Value="@EditingReasonCode.AccountId"
+                                            TextFieldName="CustomerName"
+                                            ValueFieldName="Id"
+                                            FilteringMode="DataGridFilteringMode.Contains"
+                                            DisplayFormat="{1}"
+                                            EditFormat="{0} {1}"
+                                            SelectedItemChanged="@((AccountDto e) => IsDataEntryChanged = true)"
+                                            InputCssClass="focus-value"
+                                            ShowValidationIcon="true">
+                                    <Columns>
+                                        <DxListEditorColumn FieldName="AccountNumber"
+                                                            Caption="@L["AccountNumber"]" />
+                                        <DxListEditorColumn FieldName="AccountName"
+                                                            Caption="@L["AccountName"]" />
+                                    </Columns>
+                                </DxComboBox>
+                                <ValidationMessage For="@(() => EditingReasonCode.AccountId)" />
+                            </DxFormLayoutItem>
+                        </DxFormLayoutTabPage>
+
+                        <DxFormLayoutTabPage Caption="Address">
+
+                        </DxFormLayoutTabPage>
+                        <DxFormLayoutTabPage Caption="Tax">
+
+                        </DxFormLayoutTabPage>
+                    </DxFormLayoutTabPages>
+
+
+
+                </DxFormLayout>
+            </EditForm>
+        </Row>
+    </CardBody>
+</Card>

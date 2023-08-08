@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net7.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HQSOFT.SharedInformation</RootNamespace>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Title>HQSOFT.SharedInformation.HttpApi.Client</Title>
+	<Description>HQSOFT.SharedInformation.HttpApi.Client</Description>
+	<Company>HQSOFT Company Limited</Company>
+	<Copyright>© HQSOFT Company Limited</Copyright>
+	<PackageOutputPath>C:\Working\Source\eBiz ERP\Packages</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HQSOFT.eBiz.GeneralLedger.HttpApi.Client" Version="0.1.0" />
+    <PackageReference Include="Volo.Abp.Http.Client" Version="7.3.0" />
+    <ProjectReference Include="..\HQSOFT.SharedInformation.Application.Contracts\HQSOFT.SharedInformation.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="**\*generate-proxy.json" />
+    <Content Remove="**\*generate-proxy.json" />
+  </ItemGroup>
+
+</Project>

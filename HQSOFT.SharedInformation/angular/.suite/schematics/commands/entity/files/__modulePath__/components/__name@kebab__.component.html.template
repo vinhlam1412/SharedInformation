@@ -1,0 +1,527 @@
+<abp-page [title]="'<%= resourceName %>::<%= namePlural %>' | abpLocalization">
+  <abp-page-toolbar-container class="col">
+    <div class="text-lg-end pt-2">
+      <% if(entity.ShouldExportExcel) { %>
+      <button
+        class="btn btn-primary btn-sm mx-2"
+        type="button"
+        [disabled]="isExportToExcelBusy"
+        (click)="exportToExcel()">{{ '<%= resourceName %>::ExportToExcel' | abpLocalization }}</button>
+      <% } %>
+      <button
+        *abpPermission="'<%= requiredPolicy %>.Create'"
+        class="btn btn-primary btn-sm"
+        type="button"
+        (click)="create()"
+      >
+        <i class="fa fa-plus me-1" aria-hidden="true"></i>
+        {{ '<%= resourceName %>::New<%= name %>' | abpLocalization }}
+      </button>
+    </div>
+  </abp-page-toolbar-container>
+
+  <abp-advanced-entity-filters localizationSourceName="<%= resourceName %>" [list]="list">
+    <abp-advanced-entity-filters-form>
+      <form #filterForm (keyup.enter)="list.get()">
+        <div class="row"><%
+          for (let prop of props) { %>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3"><%
+              if (prop.formControl === 'text') { %>
+              <label class="form-label" for="<%= camel(prop.name) %>Filter">
+                {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <input
+                id="<%= camel(prop.name) %>Filter"
+                class="form-control"
+                [(ngModel)]="filters.<%= camel(prop.name) %>"
+                [ngModelOptions]="{ standalone: true }"
+              /><% }
+              else if (prop.formControl === 'checkbox') { %>
+              <label class="form-label" for="<%= camel(prop.name) %>Filter">
+                  {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <select
+                name="<%= camel(prop.name) %>"
+                id="<%= camel(prop.name) %>Filter"
+                class="form-select form-control"
+                [(ngModel)]="filters.<%= camel(prop.name) %>"
+                [ngModelOptions]="{ standalone: true }"
+                (change)="list.get()"
+              >
+                <option [ngValue]=""></option>
+                <option [ngValue]="true">{{ 'AbpUi::Yes' | abpLocalization }}</option>
+                <option [ngValue]="false">{{ 'AbpUi::No' | abpLocalization }}</option>
+              </select><% }
+              else if (prop.formControl === 'number') { %>
+              <label class="form-label" for="min<%= prop.name %>">
+                {{ '<%= resourceName %>::Min<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <input
+                id="min<%= prop.name %>"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.<%= camel(prop.name) %>Min"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="max<%= prop.name %>">
+                {{ '<%= resourceName %>::Max<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <input
+                id="max<%= prop.name %>"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.<%= camel(prop.name) %>Max"
+                [ngModelOptions]="{ standalone: true }"
+              /><% }
+              else if (prop.formControl === 'date') { %>
+              <label class="form-label" for="min<%= prop.name %>">
+                  {{ '<%= resourceName %>::Min<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="min<%= prop.name %>"
+                  class="form-control"
+                  #min<%= prop.name %>Input
+                  #min<%= prop.name %>Datepicker="ngbDatepicker"
+                  name="min<%= prop.name %>"
+                  ngbDatepicker
+                  container="body"
+                  readonly
+                  (click)="min<%= prop.name %>Datepicker.toggle()"
+                  (keyup.space)="min<%= prop.name %>Datepicker.toggle()"
+                  [(ngModel)]="filters.<%= camel(prop.name) %>Min"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="min<%= prop.name %>Input.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="min<%= prop.name %>Datepicker.writeValue(null); min<%= prop.name %>Datepicker.manualDateChange(null, true)"
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="max<%= prop.name %>">
+                {{ '<%= resourceName %>::Max<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="max<%= prop.name %>"
+                  class="form-control"
+                  #max<%= prop.name %>Input
+                  #max<%= prop.name %>Datepicker="ngbDatepicker"
+                  name="max<%= prop.name %>"
+                  ngbDatepicker
+                  readonly
+                  (click)="max<%= prop.name %>Datepicker.toggle()"
+                  (keyup.space)="max<%= prop.name %>Datepicker.toggle()"
+                  [(ngModel)]="filters.<%= camel(prop.name) %>Max"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="max<%= prop.name %>Input.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="max<%= prop.name %>Datepicker.writeValue(null); max<%= prop.name %>Datepicker.manualDateChange(null, true)"
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div><% }
+              else if (prop.formControl === 'select') { %>
+              <label class="form-label" for="<%= camel(prop.name) %>Filter">
+                {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }}
+              </label>
+
+              <select
+                id="<%= camel(prop.name) %>Filter"
+                class="form-select form-control"
+                [(ngModel)]="filters.<%= camel(prop.name) %>"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <option [ngValue]="null"></option>
+                <option
+                  *ngFor="let option of <%= camel(prop.enumType) %>Options; trackBy: track.by('value')"
+                  [ngValue]="option.value"
+                >
+                  {{ '<%= resourceName %>::Enum:<%= prop.enumType %>.' + option.value  | abpLocalization }}
+                </option>
+              </select><% } %>
+            </div>
+          </div><% }
+          for (let prop of navProps.concat(markNavigationConnections(navConnections))) { %>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="<%= camel(prop.name) %>Filter">
+                {{ '<%= resourceName %>::<%= prop.entityRef.name %>' | abpLocalization }}
+              </label><%
+              if (prop.formControl === 'lookup.select') { %>
+              <abp-lookup-select
+                cid="<%= camel(prop.name) %>Filter"
+                [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+                [(ngModel)]="filters.<%= getLookupName(prop, prop.isNavigationConnection) %>"
+                [ngModelOptions]="{ standalone: true }"
+              ></abp-lookup-select><% }
+              else if (prop.formControl === 'lookup.typeahead') { %>
+              <abp-lookup-typeahead
+                cid="<%= camel(prop.name) %>Filter"
+                displayNameProp="<%= camel(prop.entityRef.displayProperty) %>"
+                [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+                [(ngModel)]="filters.<%=  getLookupName(prop, prop.isNavigationConnection) %>"
+                [ngModelOptions]="{ standalone: true }"
+              ></abp-lookup-typeahead><% }
+              else if (prop.formControl === 'lookup.modal') { %>
+              <abp-lookup-input
+                cid="<%= camel(prop.name) %>Filter"
+                displayNameProp="<%= camel(prop.entityRef.displayProperty) %>"
+                lookupNameProp="displayName"
+                [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+                [(ngModel)]="filters.<%=  getLookupName(prop, prop.isNavigationConnection) %>"
+                [ngModelOptions]="{ standalone: true }"
+              ></abp-lookup-input><% } %>
+            </div>
+          </div><% } %>
+
+          <div class="col-12 col-sm-auto align-self-end mb-3">
+            <div class="row">
+              <div class="col-6 col-sm-auto d-grid">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="clearFilters()"
+                >
+                  <span>{{ 'AbpUi::Clear' | abpLocalization }}</span>
+                </button>
+              </div>
+              <div class="col-6 col-sm-auto d-grid">
+                <button type="button" class="btn btn-primary" (click)="list.get()">
+                  <span>{{ 'AbpUi::Refresh' | abpLocalization }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </abp-advanced-entity-filters-form>
+  </abp-advanced-entity-filters>
+
+  <div class="card">
+    <div class="card-body">
+      <ngx-datatable [rows]="data.items" [count]="data.totalCount" [list]="list" default>
+        <ngx-datatable-column
+          [name]="'AbpUi::Actions' | abpLocalization"
+          [maxWidth]="150"
+          [width]="150"
+          [sortable]="false"
+        >
+          <ng-template let-row="row" let-i="rowIndex" ngx-datatable-cell-template>
+            <div ngbDropdown container="body" class="d-inline-block">
+              <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                ngbDropdownToggle
+              >
+                <i class="fa fa-cog me-1" aria-hidden="true"></i>
+                {{ 'AbpUi::Actions' | abpLocalization }}
+              </button>
+
+              <div ngbDropdownMenu>
+                <button
+                  ngbDropdownItem
+                  *abpPermission="'<%= requiredPolicy %>.Edit'"
+                  (click)="update(row)"
+                >
+                  {{ 'AbpUi::Edit' | abpLocalization }}
+                </button>
+
+                <button
+                  ngbDropdownItem
+                  *abpPermission="'<%= requiredPolicy %>.Delete'"
+                  (click)="delete(row)"
+                >
+                  {{ 'AbpUi::Delete' | abpLocalization }}
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </ngx-datatable-column><%
+        for (let prop of props) {
+         if(!prop.showOnList) { continue; }
+         %>
+        <ngx-datatable-column name="{{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }}" prop="<%= entityNamePrefix %><%= camel(prop.name) %>"><%
+          if (prop.enumType) { %>
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.<%= entityNamePrefix %><%= camel(prop.name) %> !== null ? ('<%= resourceName %>::Enum:<%= prop.enumType %>.' + row.<%= entityNamePrefix %><%= camel(prop.name) %> | abpLocalization) : '' }}
+          </ng-template><% }
+          else if (prop.formControl === 'date') { %>
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.<%= entityNamePrefix %><%= camel(prop.name) %> | date }}
+          </ng-template><% }
+          else if (prop.type === 'boolean') { %>
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <ng-template [ngIf]="row.<%= entityNamePrefix %><%= camel(prop.name) %>" [ngIfThen]="yes" [ngIfElse]="no"></ng-template>
+
+            <ng-template #yes>
+              <div class="text-success">
+                <span [title]="'AbpUi::Yes' | abpLocalization">
+                  <i class="fa fa-check" aria-hidden="true"></i>
+                </span>
+              </div>
+            </ng-template>
+
+            <ng-template #no>
+              <div class="text-danger">
+                <span [title]="'AbpUi::No' | abpLocalization">
+                  <i class="fa fa-times" aria-hidden="true"></i>
+                </span>
+              </div>
+            </ng-template>
+          </ng-template><% }
+          else { %>
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.<%= entityNamePrefix %><%= camel(prop.name) %> }}
+          </ng-template><% } %>
+        </ngx-datatable-column><% }
+        for (let prop of navProps) { %>
+
+        <ngx-datatable-column name="{{ '<%= resourceName %>::<%= prop.entityRef.name %>' | abpLocalization }}" prop="<%= camel(prop.entityRef.name) %>.<%= camel(prop.entityRef.displayProperty) %>">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.<%= camel(prop.entityRef.name) %>?.<%= camel(prop.entityRef.displayProperty) %> }}
+          </ng-template>
+        </ngx-datatable-column><% } %>
+      </ngx-datatable>
+    </div>
+  </div>
+</abp-page>
+
+<abp-modal [busy]="isModalBusy" [(visible)]="isModalOpen">
+  <ng-template #abpHeader>
+    <h3>
+      {{ (selected ? 'AbpUi::Edit' : '<%= resourceName %>::New<%= name %>') | abpLocalization }}
+    </h3>
+  </ng-template>
+
+  <ng-template #abpBody>
+
+    <form [formGroup]="form" id="<%= kebab(name) %>" (ngSubmit)="submitForm()" validateOnSubmit>
+     <% if(navConnections.length) { %>
+      <ul ngbNav #nav="ngbNav" class="nav-tabs">
+        <li ngbNavItem>
+          <a ngbNavLink>
+            {{ '<%= name %>' | abpLocalization }}
+          </a>
+          <ng-template ngbNavContent>
+     <% } %>
+      <div class="mt-2 fade-in-top"><%
+        props.filter(p => p.showOnModal).forEach((prop, i) => {
+        const readonlyOnEditModal = prop.readonlyOnEditModal;
+        if (prop.formControl === 'text') { %>
+        <div class="mb-3" <%= prop.ngIf  %>>
+          <label class="form-label" for="<%= kebab(name) %>-<%= kebab(prop.name) %>">
+            {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label>
+
+          <% if(prop.ref.IsTextArea) {%>
+          <textarea
+            id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            class="form-control"<% if (prop.ref.MaxLength) { %>
+            maxlength="<%= prop.ref.MaxLength %>"<% } if (prop.ref.MinLength) { %>
+            minlength="<%= prop.ref.MinLength %>"<% } if (!i) { %>
+            autofocus<% } if (readonlyOnEditModal) { %>
+            [readonly]="selected" <% }%>
+          >
+          </textarea>
+          <% } else { %>
+          <input
+            id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            class="form-control"<% if (prop.ref.MaxLength) { %>
+            maxlength="<%= prop.ref.MaxLength %>"<% } if (prop.ref.MinLength) { %>
+            minlength="<%= prop.ref.MinLength %>"<% } if (!i) { %>
+            autofocus<% } if (readonlyOnEditModal) { %>
+            [readonly]="selected" <% }%>
+          />
+          <% } %>
+        </div><% }
+        else if (prop.formControl === 'checkbox') { %>
+        <div class="form-check mb-3" <%= prop.ngIf  %>>
+          <input
+            type="checkbox"
+            id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            class="form-check-input"<% if (!i) { %>
+            autofocus<% } if (readonlyOnEditModal) { %>
+            [readonly]="selected" <% }%>
+          />
+
+          <label
+            for="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            class="form-check-label"
+          >
+              {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label>
+        </div><% }
+        else if (prop.formControl === 'number') { %>
+        <div class="mb-3" <%= prop.ngIf  %>>
+          <label class="form-label" for="<%= kebab(name) %>-<%= kebab(prop.name) %>">
+            {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label>
+
+          <input
+            type="number"
+            id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            class="form-control"<% if (prop.ref.MaxLength) { %>
+            max="<%= prop.ref.MaxLength %>"<% } if (prop.ref.MinLength) { %>
+            min="<%= prop.ref.MinLength %>"<% } if (!i) { %>
+            autofocus<% } if (readonlyOnEditModal) { %>
+            [readonly]="selected" <% }%>
+          />
+        </div><% }
+        else if (prop.formControl === 'date') { %>
+        <div class="mb-3" <%= prop.ngIf  %>>
+          <label class="form-label" for="<%= kebab(name) %>-<%= kebab(prop.name) %>">
+            {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label>
+
+          <div class="input-group" validationTarget>
+            <input
+              readonly
+              id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+              formControlName="<%= camel(prop.name) %>"
+              class="form-control"
+              ngbDatepicker
+              #<%= camel(prop.name) %>Input
+              #<%= camel(prop.name) %>Datepicker="ngbDatepicker"
+              (click)="<%= camel(prop.name) %>Datepicker.open()"
+              (keyup.space)="<%= camel(prop.name) %>Datepicker.open()"<% if (!i) { %>
+              autofocus<% } %>
+            />
+            <div *ngIf="<%= camel(prop.name) %>Input.value" class="input-group-append">
+              <button
+                class="btn btn-link px-2"
+                type="button"
+                <% if (readonlyOnEditModal) { %>
+                [disabled]="selected" <% }%>
+                [title]="'AbpUi::Clear' | abpLocalization"
+                (click)="<%= camel(prop.name) %>Datepicker.writeValue(null); <%= camel(prop.name) %>Datepicker.manualDateChange(null, true)"
+              >
+                <i class="fa fa-times" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div><% }
+        else if (prop.formControl === 'select') { %>
+        <div class="mb-3" <%= prop.ngIf  %>>
+          <label class="form-label" for="<%= kebab(name) %>-<%= kebab(prop.name) %>">
+            {{ '<%= resourceName %>::<%= prop.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label>
+
+          <select
+            id="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            class="form-select form-control"<% if (!i) { %>
+            autofocus<% } if (readonlyOnEditModal) { %>
+            [readonly]="selected" <% }%>
+          >
+            <option [ngValue]="null"></option>
+            <option
+              *ngFor="let option of <%= camel(prop.enumType) %>Options; trackBy: track.by('key')"
+              [ngValue]="option.value"
+            >
+              {{ '<%= resourceName %>::Enum:<%= prop.enumType %>.' + option.value  | abpLocalization }}
+            </option>
+          </select>
+        </div><% } })
+        for (let prop of navProps) { %>
+        <div class="mb-3">
+          <label class="form-label" for="<%= kebab(name) %>-<%= kebab(prop.name) %>">
+            {{ '<%= resourceName %>::<%= prop.entityRef.name %>' | abpLocalization }} <%= prop.asterisk %>
+          </label><%
+          if (prop.formControl === 'lookup.select') { %>
+
+          <abp-lookup-select
+            cid="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+          ></abp-lookup-select><% }
+          else if (prop.formControl === 'lookup.typeahead') { %>
+          <abp-lookup-typeahead
+            cid="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            displayNameProp="<%= camel(prop.entityRef.displayProperty) %>"
+            [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+            [editingData]="selected?.<%= camel(prop.entityRef.name) %>"
+          ></abp-lookup-typeahead><% }
+          else if (prop.formControl === 'lookup.modal') { %>
+          <abp-lookup-input
+            cid="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+            formControlName="<%= camel(prop.name) %>"
+            displayNameProp="<%= camel(prop.entityRef.displayProperty) %>"
+            lookupNameProp="displayName"
+            [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+            [editingData]="selected?.<%= camel(prop.entityRef.name) %>"
+          ></abp-lookup-input><% } %>
+        </div><% } %>
+      </div>
+      <% if(navConnections.length) { %>
+            </ng-template>
+          </li>
+         <% for (let prop of navConnections) { %>
+          <li ngbNavItem>
+            <a ngbNavLink>
+              {{ '<%= prop.name %>' | abpLocalization }}
+            <span *ngIf="this.form.controls['<%= getLookupName(prop, true) %>s']">
+              ({{ this.form.controls['<%= getLookupName(prop, true) %>s'].value?.length }})
+            </span>
+            </a>
+            <ng-template ngbNavContent>
+              <abp-lookup-typeahead-mtm
+                cid="<%= kebab(name) %>-<%= kebab(prop.name) %>"
+                formControlName="<%= getLookupName(prop, true) %>s"
+                displayNameProp="<%= camel(prop.entityRef.displayProperty) %>"
+                lookupNameProp="displayName"
+                [getFn]="service.get<%= prop.entityRef.name %>Lookup"
+                [editingData]="selected?.<%= camel(prop.name) %>"
+              ></abp-lookup-typeahead-mtm>
+            </ng-template>
+          </li>
+          <% } %>
+        </ul>
+        <div [ngbNavOutlet]="nav"></div>
+     <% } %>
+    </form>
+  </ng-template>
+
+  <ng-template #abpFooter>
+    <button type="button" class="btn btn-secondary" abpClose>
+      {{ 'AbpUi::Cancel' | abpLocalization }}
+    </button>
+
+    <abp-button iconClass="fa fa-check" buttonType="submit" formName="<%= kebab(name) %>">
+      {{ 'AbpUi::Save' | abpLocalization }}
+    </abp-button>
+  </ng-template>
+</abp-modal>

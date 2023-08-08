@@ -1,0 +1,14 @@
+##A1FDD3BD4D13A15F79E536956A01CD94##
+using System;
+using Volo.Abp.Application.Dtos;
+%%<if:CheckConcurrency>%%using Volo.Abp.Domain.Entities;%%</if:CheckConcurrency>%%
+
+namespace %%solution-namespace%%%%<if:ApplicationContractsNotExists>%%%%.AppServices%%</if:ApplicationContractsNotExists>%%.%%entity-namespace%%
+{
+    public class %%entity-name%%Dto : %%dto-type%%<%%primary-key%%>%%<if:CheckConcurrency>%%, IHasConcurrencyStamp%%</if:CheckConcurrency>%%
+    {
+          %%item-dto-properties%%%%item-dto-np-properties%%
+        %%<if:CheckConcurrency>%%public string ConcurrencyStamp { get; set; }%%</if:CheckConcurrency>%%
+        public bool IsChanged { get; set; }
+    }
+}

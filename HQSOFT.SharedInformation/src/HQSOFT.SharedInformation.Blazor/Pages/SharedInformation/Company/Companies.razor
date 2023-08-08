@@ -1,0 +1,248 @@
+﻿@page "/SharedInformation/Companies/edit/{Id}"
+@using DevExpress.Blazor
+@using HQSOFT.SharedInformation.Companies;
+@using HQSOFT.SharedInformation.Countries;
+@using HQSOFT.SharedInformation.Provinces;
+@using HQSOFT.SharedInformation.States;
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.JSInterop;
+@using Volo.Abp.AspNetCore.Components.Messages;
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Volo.Abp.Http.Client;
+@inject ICountriesAppService CountriesAppService
+@inject ICompaniesAppService CompaniesAppService
+@inject IProvincesAppService ProvincesAppService
+@inject IStatesAppService StatesAppService
+@inject IUiMessageService UiMessageService
+@inject IJSRuntime JSRuntime
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+@inherits SharedInformationComponentBase
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Companies"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+<Card>
+    <CardBody>
+        <Row>
+            <EditForm @ref="EditFormMain"
+                      Model="EditingCompany"
+                      Context="EditFormContext">
+            <DataAnnotationsValidator />
+                <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+
+                    <DxFormLayoutItem Caption="@(L["Company"] + "*")" ColSpanLg="6" ColSpanMd="12">
+                        <DxTextBox Text="@EditingCompany.CompanyName" 
+                                   TextExpression="@(()=>  EditingCompany.CompanyName)"
+                                   TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.CompanyName = newValue;
+                                   })"
+                                   BindValueMode="BindValueMode.OnLostFocus"
+                                   InputCssClass="focus-value"
+                                   ShowValidationIcon="true"/>
+                        <ValidationMessage For="@(()=>EditingCompany.CompanyName)"/>
+                    </DxFormLayoutItem>
+
+
+                    <DxFormLayoutItem Caption="@(L["Abbreviation"] + "*")" ColSpanLg="3" ColSpanMd="12">
+                        <DxTextBox Text="@EditingCompany.Abbreviation"
+                                   TextExpression="@(()=>  EditingCompany.Abbreviation)"
+                                   TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Abbreviation = newValue;
+                                   })"
+                                   BindValueMode="BindValueMode.OnLostFocus"
+                                   InputCssClass="focus-value"
+                                   ShowValidationIcon="true" />
+                        <ValidationMessage For="@(()=>EditingCompany.Abbreviation)" />
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="@(L["IsGroup"])" ColSpanLg="3" ColSpanMd="12">
+                        <DxCheckBox ValueChecked="@EditingCompany.IsGroup"
+                                    CheckedExpression="@(() => EditingCompany.IsGroup)"
+                                    CheckedChanged="@((bool newValue) => {
+                                                        IsDataEntryChanged = true;
+                                                        EditingCompany.IsGroup = newValue;
+
+                                    })">
+                        </DxCheckBox>
+                        <ValidationMessage For="@(() => EditingCompany.IsGroup)" />
+                    </DxFormLayoutItem>
+                    
+                    <DxFormLayoutItem Caption="@(L["ParentCompany"])" ColSpanLg="6" ColSpanMd="12">
+                        <DxComboBox Data="@ParentCompaniesCollection"
+                        @bind-Value="@EditingCompany.ParentCompany"
+                                    TextFieldName="CompanyName"
+                                    ValueFieldName="Id"
+                                    FilteringMode="@DataGridFilteringMode.Contains"
+                                    CssClass="cw-480"
+                                    DisplayFormat="{0}"
+                                    EditFormat="{0} "
+                                    InputCssClass="focus-value"
+                                    ShowValidationIcon="true">
+                            <Columns>
+                                <DxListEditorColumn FieldName="CompanyName"
+                                                    Caption="@L["CompanyName"]" />
+                            </Columns>
+                        </DxComboBox>
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="@(L["DefaultCurrency"] + "*")" ColSpanLg="3" ColSpanMd="12">
+                       <DxComboBox Data="@DefaultCurrencies"
+                           @bind-Value="EditingCompany.DefaultCurrency"
+                            TextFieldName="Name"
+                            ValueFieldName="Id"
+                            FilteringMode="DataGridFilteringMode.Contains"
+                            DisplayFormat="{0}"
+                            EditFormat="{0}"
+                            SelectedItemChanged="@((DefaultCurrency e) => IsDataEntryChanged = true)"
+                            InputCssClass="focus-value">
+                            <Columns>
+                                <DxListEditorColumn FieldName="Name"
+                                                    Caption="@L["Name"]" />
+                            </Columns>
+
+                       </DxComboBox>
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="@(L["TaxID"] + "*")" ColSpanLg="3" ColSpanMd="12">
+                        <DxTextBox Text="@EditingCompany.TaxID"
+                                   TextExpression="@(()=>  EditingCompany.TaxID)"
+                                   TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.TaxID = newValue;
+                                   })"
+                                   BindValueMode="BindValueMode.OnLostFocus"
+                                   InputCssClass="focus-value"
+                                   ShowValidationIcon="true" />
+                        <ValidationMessage For="@(()=>EditingCompany.TaxID)" />
+                    </DxFormLayoutItem>
+
+                    <DxFormLayoutGroup Caption="@L["AddressInformation"]" ColSpanMd="12">
+                        <DxFormLayoutItem Caption="@(L["Country"] + " *")" ColSpanLg="4" ColSpanMd="12">
+                            <DxComboBox Data="@CountriesCollection"
+                            @bind-Value="@EditingCompany.CountryId"
+                                        TextFieldName="Description"
+                                        ValueFieldName="Id"
+                                        FilteringMode="DataGridFilteringMode.Contains"
+                                        SelectedItemChanged="@((CountryDto e) => SelectedCountryChangedAsync(e))"
+                                        InputCssClass="focus-value"
+                                        ShowValidationIcon="true">
+                            </DxComboBox>
+                            <ValidationMessage For="@(() => EditingCompany.CountryId)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@(L["Province"] + " *")" ColSpanLg="4" ColSpanMd="12">
+                            <DxComboBox Data="@ProvincesCollection"
+                            @bind-Value="@EditingCompany.ProvinceId"
+                                        TextFieldName="Description"
+                                        ValueFieldName="Id"
+                                        SelectedItemChanged="@((ProvinceDto province) => SelectedProvinceChangedAsync(province))"
+                                        FilteringMode="DataGridFilteringMode.Contains"
+                                        InputCssClass="focus-value"
+                                        ShowValidationIcon="true">
+                            </DxComboBox>
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@(L["State"] + " *")" ColSpanLg="4" ColSpanMd="12">
+                            <DxComboBox Data="@StatesCollection"
+                            @bind-Value="@EditingCompany.StateId"
+                                        TextFieldName="Description"
+                                        ValueFieldName="Id"
+                                        SelectedItemChanged="@((StateDto state) => SelectedStateChangedAsync(state))"
+                                        FilteringMode="DataGridFilteringMode.Contains"
+                                        InputCssClass="focus-value"
+                                        ShowValidationIcon="true">
+                            </DxComboBox>
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Address1"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Address1"
+                                       TextExpression="@(()=>  EditingCompany.Address1)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Address1 = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Address1)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Address2"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Address2"
+                                       TextExpression="@(()=>  EditingCompany.Address2)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Address2 = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Address2)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Phone1"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Phone1"
+                                       TextExpression="@(()=>  EditingCompany.Phone1)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Phone1 = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Phone1)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Phone2"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Phone2"
+                                       TextExpression="@(()=>  EditingCompany.Phone2)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Phone2 = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Phone2)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Website"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Web"
+                                       TextExpression="@(()=>  EditingCompany.Web)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Web = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Web)" />
+                        </DxFormLayoutItem>
+
+                        <DxFormLayoutItem Caption="@L["Email"]" ColSpanLg="8" ColSpanMd="12">
+                            <DxTextBox Text="@EditingCompany.Email"
+                                       TextExpression="@(()=>  EditingCompany.Email)"
+                                       TextChanged="@((newValue) => {
+                                                    IsDataEntryChanged = true;
+                                                    EditingCompany.Email = newValue;
+                                   })"
+                                       BindValueMode="BindValueMode.OnLostFocus"
+                                       InputCssClass="focus-value"
+                                       ShowValidationIcon="true" />
+                            <ValidationMessage For="@(()=>EditingCompany.Email)" />
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>                   
+                </DxFormLayout>
+
+
+            </EditForm>
+        </Row>
+    </CardBody>
+</Card>
+
+
+
+

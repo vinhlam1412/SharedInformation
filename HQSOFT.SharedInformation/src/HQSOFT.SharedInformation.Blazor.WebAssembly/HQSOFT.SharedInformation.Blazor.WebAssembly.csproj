@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <Import Project="..\..\common.props" />
+    
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<RootNamespace>HQSOFT.SharedInformation</RootNamespace>
+		<Title>HQSOFT.SharedInformation.Blazor.WebAssembly</Title>
+		<Description>HQSOFT.SharedInformation.Blazor.WebAssembly</Description>
+		<Company>HQSOFT Company Limited</Company>
+		<Copyright>© HQSOFT Company Limited</Copyright>
+		<PackageOutputPath>C:\Working\Source\eBiz ERP\Packages</PackageOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly.Theming" Version="7.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HQSOFT.SharedInformation.Blazor\HQSOFT.SharedInformation.Blazor.csproj" />
+        <ProjectReference Include="..\HQSOFT.SharedInformation.HttpApi.Client\HQSOFT.SharedInformation.HttpApi.Client.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,20 @@
+import { Prop } from '../models';
+export declare function getLookupName(prop: Prop, isNavigationConnection: boolean): string;
+export declare function markNavigationConnections(props: Prop[]): {
+    isNavigationConnection: boolean;
+    ref: import("../models").NavigationProperty | import("../models").Property;
+    name: string;
+    entityRef: import("../models").EntityRef;
+    getInput: string[];
+    type: import("../enums").ePropType;
+    enumType?: string | undefined;
+    formControl: import("../enums").eUiPickType | import("../enums").eFormControl;
+    defaultValue: any;
+    validators: string[];
+    asterisk: string;
+    question: string;
+    showOnList?: boolean | undefined;
+    readonlyOnEditModal?: boolean | undefined;
+    showOnModal?: boolean | undefined;
+    ngIf?: boolean | undefined;
+}[];

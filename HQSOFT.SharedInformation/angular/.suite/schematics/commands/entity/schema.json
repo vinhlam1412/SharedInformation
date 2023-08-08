@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "SchematicsAbpEntityModule",
+  "title": "ABP Entity Module Schema",
+  "type": "object",
+  "properties": {
+    "template": {
+      "description": "Which template to use",
+      "type": "string",
+      "enum": ["app-pro", "app-nolayers-pro", "microservice-pro", "module-pro"],
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "Please choose a template."
+    },
+    "target": {
+      "description": "The solution name to generate the code for",
+      "type": "string",
+      "$default": {
+        "$source": "argv",
+        "index": 1
+      },
+      "x-prompt": "Please enter complete solution name. (case-sensitive, e.g. Acme.BookStore)"
+    },
+    "source": {
+      "description": "The path to read entity info from",
+      "type": "string",
+      "$default": {
+        "$source": "argv",
+        "index": 2
+      },
+      "x-prompt": "Please enter the absolute path to JSON file with entity information."
+    },
+    "selector": {
+      "description": "A custom selector for entity CRUD component",
+      "type": "string",
+      "format": "html-selector",
+      "visible": false
+    }
+  },
+  "required": ["template", "source"]
+}

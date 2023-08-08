@@ -1,0 +1,320 @@
+@page "/SharedInformation/Countries"
+
+
+
+@attribute [Authorize(SharedInformationPermissions.Countries.Default)]
+@using global::HQSOFT.SharedInformation.Countries
+@using global::HQSOFT.SharedInformation.Localization
+@using global::HQSOFT.SharedInformation.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using global::HQSOFT.SharedInformation.Permissions
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@inherits SharedInformationComponentBase
+@inject ICountriesAppService CountriesAppService
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Countries"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+@* ************************* SEARCH ************************* *@
+<Card>
+    <CardBody>
+        <Form id="CountrySearchForm" class="mb-3">
+            <Addons>
+                <Addon AddonType="AddonType.Body">
+                    <TextEdit @bind-Text="@Filter.FilterText"
+                              Autofocus="true"
+                              Placeholder="@L["Search"]">
+                    </TextEdit>
+                </Addon>
+                <Addon AddonType="AddonType.End">
+                    <SubmitButton Form="CountrySearchForm" Clicked="GetCountriesAsync">
+                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                    </SubmitButton>
+                </Addon>
+            </Addons>
+        </Form>
+    </CardBody>
+</Card>
+
+@* ************************* DATA GRID ************************* *@
+<Card>
+    <CardBody>
+        <DataGrid TItem="CountryDto"
+                  Data="CountryList"
+                  ReadData="OnDataGridReadAsync"
+                  TotalItems="TotalCount"
+                  ShowPager="true"
+                  Responsive="true"
+                  PageSize="PageSize">
+            <DataGridColumns>
+                <DataGridEntityActionsColumn TItem="CountryDto" @ref="@EntityActionsColumn">
+                    <DisplayTemplate>
+                        <EntityActions TItem="CountryDto" EntityActionsColumn="@EntityActionsColumn">
+                            <EntityAction TItem="CountryDto"
+                                          Visible="@CanEditCountry"
+                                          Clicked="async () => await OpenEditCountryModalAsync(context)"
+                                          Text="@L["Edit"]"></EntityAction>
+                            <EntityAction TItem="CountryDto"
+                                          Visible="@CanDeleteCountry"
+                                          Clicked="() => DeleteCountryAsync(context)"
+                                          ConfirmationMessage="@(()=> L["DeleteConfirmationMessage"])"
+                                          Text="@L["Delete"]"></EntityAction>
+                        </EntityActions>
+                    </DisplayTemplate>
+                </DataGridEntityActionsColumn>
+               
+              <DataGridColumn TItem="CountryDto"
+                      Field="Code"
+                      Caption="@L["Code"]">
+              </DataGridColumn>
+
+              <DataGridColumn TItem="CountryDto"
+                      Field="Description"
+                      Caption="@L["Description"]">
+              </DataGridColumn>
+
+              <DataGridColumn TItem="CountryDto"
+                      Field="DateFormat"
+                      Caption="@L["DateFormat"]">
+              </DataGridColumn>
+
+              <DataGridColumn TItem="CountryDto"
+                      Field="TimeFormat"
+                      Caption="@L["TimeFormat"]">
+              </DataGridColumn>
+
+              <DataGridColumn TItem="CountryDto"
+                      Field="TimeZone"
+                      Caption="@L["TimeZone"]">
+              </DataGridColumn>
+
+              <DataGridColumn TItem="CountryDto"
+                      Field="Idx"
+                      Caption="@L["Idx"]">
+              </DataGridColumn>
+
+            </DataGridColumns>
+        </DataGrid>
+    </CardBody>
+</Card>
+
+@* ************************* CREATE MODAL ************************* *@
+<Modal @ref="CreateCountryModal" Closing="@CreateCountryModal.CancelClosingModalWhenFocusLost">
+    <ModalContent Centered="true">
+        <Form id="CreateCountryForm">
+            <ModalHeader>
+                <ModalTitle>@L["NewCountry"]</ModalTitle>
+                <CloseButton Clicked="CloseCreateCountryModalAsync" />
+            </ModalHeader>
+            <ModalBody>
+                <Validations @ref="@NewCountryValidations"
+                            Mode="ValidationMode.Auto"
+                            Model="@NewCountry"
+                            ValidateOnLoad="false">
+                     
+                    
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Code"] *</FieldLabel>
+                            <TextEdit @bind-Text="@NewCountry.Code"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Description"] *</FieldLabel>
+                            <TextEdit @bind-Text="@NewCountry.Description"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["DateFormat"]</FieldLabel>
+                            <TextEdit @bind-Text="@NewCountry.DateFormat"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["TimeFormat"]</FieldLabel>
+                            <TextEdit @bind-Text="@NewCountry.TimeFormat"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["TimeZone"]</FieldLabel>
+                            <TextEdit @bind-Text="@NewCountry.TimeZone"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Idx"]</FieldLabel>
+                            <NumericPicker TValue="int" @bind-Value="@NewCountry.Idx"  Decimals="0" >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                             </NumericPicker>
+                        </Field>
+                     </Validation>
+
+
+                    
+                    
+                </Validations>
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary"
+                        Clicked="CloseCreateCountryModalAsync">
+                    @L["Cancel"]
+                </Button>
+                <SubmitButton Form="CreateCountryForm" Clicked="CreateCountryAsync" />
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
+
+@* ************************* EDIT MODAL ************************* *@
+<Modal @ref="EditCountryModal" Closing="@EditCountryModal.CancelClosingModalWhenFocusLost">
+    <ModalContent Centered="true">
+        <Form id="EditCountryForm">
+            <ModalHeader>
+                <ModalTitle>@L["Update"]</ModalTitle>
+                <CloseButton Clicked="CloseEditCountryModalAsync" />
+            </ModalHeader>
+            <ModalBody>
+                <Validations @ref="@EditingCountryValidations"
+                            Mode="ValidationMode.Auto"
+                            Model="@EditingCountry"
+                            ValidateOnLoad="false">
+                     
+                    
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Code"] *</FieldLabel>
+                            <TextEdit @bind-Text="@EditingCountry.Code"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Description"] *</FieldLabel>
+                            <TextEdit @bind-Text="@EditingCountry.Description"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["DateFormat"]</FieldLabel>
+                            <TextEdit @bind-Text="@EditingCountry.DateFormat"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["TimeFormat"]</FieldLabel>
+                            <TextEdit @bind-Text="@EditingCountry.TimeFormat"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["TimeZone"]</FieldLabel>
+                            <TextEdit @bind-Text="@EditingCountry.TimeZone"  >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                            </TextEdit>
+                        </Field>
+                    </Validation>
+
+
+                    <Validation>
+                        <Field>
+                            <FieldLabel>@L["Idx"]</FieldLabel>
+                            <NumericPicker TValue="int" @bind-Value="@EditingCountry.Idx"  Decimals="0" >
+                                <Feedback>
+                                    <ValidationError />
+                                </Feedback>
+                             </NumericPicker>
+                        </Field>
+                     </Validation>
+
+
+                    
+                    
+                </Validations>
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary"
+                        Clicked="CloseEditCountryModalAsync">
+                    @L["Cancel"]
+                </Button>
+                <SubmitButton Form="CreateCountryForm" Clicked="UpdateCountryAsync" />
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>

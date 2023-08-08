@@ -1,0 +1,9 @@
+{
+  "schematics": {
+    "entity": {
+      "description": "ABP Suite Entity Module Schematics",
+      "factory": "./commands/entity",
+      "schema": "./commands/entity/schema.json"
+    }
+  }
+}

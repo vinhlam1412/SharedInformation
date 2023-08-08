@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HQSOFT.SharedInformation</RootNamespace>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Title>HQSOFT.SharedInformation.EntityFrameworkCoree</Title>
+	<Description>HQSOFT.SharedInformation.EntityFrameworkCore</Description>
+	<Company>HQSOFT Company Limited</Company>
+	<Copyright>© HQSOFT Company Limited</Copyright>
+	<PackageOutputPath>C:\Working\Source\eBiz ERP\Packages</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HQSOFT.eBiz.GeneralLedger.EntityFrameworkCore" Version="0.1.0" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="7.3.0" />
+    <ProjectReference Include="..\HQSOFT.SharedInformation.Domain\HQSOFT.SharedInformation.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
